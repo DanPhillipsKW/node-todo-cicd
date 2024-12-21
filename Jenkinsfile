@@ -9,19 +9,14 @@ pipeline {
         }
         stage('Build and Test'){
             steps{
-                sh 'docker buildx build . -t dannyp/node-todo-test:latest'
+                // Clean up any existing container
+                sh 'docker rm -f node-todo-app || true'
+                // Build using buildx
+                sh 'docker buildx build . -t todo-node-app'
+                // Run the new container
+                sh 'docker run -d --name node-todo-app -p 8000:8000 todo-node-app'
             }
         }
-        /* Commenting out Docker Hub push stage for now
-        stage('Push'){
-            steps{
-                withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
-        	     sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-                 sh 'docker push dannp/node-todo-test:latest'
-                }
-            }
-        }
-        */
         stage('Deploy'){
             steps{
                 sh "docker-compose down && docker-compose up -d"
