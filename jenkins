@@ -19,13 +19,15 @@ pipeline {
                         // Clean up any existing container
                         sh 'docker rm -f node-todo-app || true'
                         
-                        // Build using buildx
-                        echo "Building Docker image..."
-                        sh 'docker buildx build . -t todo-node-app --no-cache'
-                        
-                        // Run the new container
-                        echo "Running Docker container..."
-                        sh 'docker run -d --name node-todo-app -p 8000:8000 todo-node-app'
+                        // Build using buildx from the correct directory
+                        dir('/home/ec2-user/jenkins/workspace/ToDo') {
+                            echo "Building Docker image..."
+                            sh 'docker buildx build . -t todo-node-app --no-cache'
+                            
+                            // Run the new container
+                            echo "Running Docker container..."
+                            sh 'docker run -d --name node-todo-app -p 8000:8000 todo-node-app'
+                        }
                         
                         echo "Build stage completed successfully"
                     } catch (Exception e) {
@@ -40,9 +42,11 @@ pipeline {
             steps {
                 script {
                     try {
-                        echo "Starting deployment..."
-                        sh "docker-compose down || true"
-                        sh "docker-compose up -d"
+                        dir('/home/ec2-user/jenkins/workspace/ToDo') {
+                            echo "Starting deployment..."
+                            sh "docker-compose down || true"
+                            sh "docker-compose up -d"
+                        }
                         echo "Deployment completed"
                     } catch (Exception e) {
                         echo "Deployment failed: ${e.getMessage()}"
