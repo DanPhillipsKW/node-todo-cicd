@@ -1,0 +1,64 @@
+pipeline {
+    agent { label 'ToDo' }
+    
+    stages {
+        stage('Code') {
+            steps {
+                // Clean workspace before cloning
+                cleanWs()
+                echo "Cloning repository..."
+                git url: 'https://github.com/DanPhillipsKW/node-todo-cicd.git', branch: 'master' 
+            }
+        }
+        
+        stage('Build and Test') {
+            steps {
+                script {
+                    try {
+                        echo "Starting build stage..."
+                        // Clean up any existing container
+                        sh 'docker rm -f node-todo-app || true'
+                        
+                        // Build using buildx
+                        echo "Building Docker image..."
+                        sh 'docker buildx build . -t todo-node-app --no-cache'
+                        
+                        // Run the new container
+                        echo "Running Docker container..."
+                        sh 'docker run -d --name node-todo-app -p 8000:8000 todo-node-app'
+                        
+                        echo "Build stage completed successfully"
+                    } catch (Exception e) {
+                        echo "Build stage failed: ${e.getMessage()}"
+                        throw e
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                script {
+                    try {
+                        echo "Starting deployment..."
+                        sh "docker-compose down || true"
+                        sh "docker-compose up -d"
+                        echo "Deployment completed"
+                    } catch (Exception e) {
+                        echo "Deployment failed: ${e.getMessage()}"
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo "Pipeline completed"
+        }
+        failure {
+            echo "Pipeline failed"
+        }
+    }
+}
