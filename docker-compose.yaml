@@ -1,7 +1,10 @@
-version: '3.9'
-
+version: '3'
 services:
   web:
     build: .
     ports:
       - "8000:8000"
+    environment:
+      - NODE_ENV=production
+    restart: always
+    container_name: node-todo-app
