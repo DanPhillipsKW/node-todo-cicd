@@ -14,14 +14,14 @@ pipeline {
             steps {
                 script {
                     echo "Starting Build stage..."
-                    // Stop and remove any existing containers
+                    // Clean up any existing containers and images
                     sh '''
-                        docker ps -q --filter "name=node-todo-app" | grep -q . && docker stop node-todo-app || true
-                        docker ps -aq --filter "name=node-todo-app" | grep -q . && docker rm -f node-todo-app || true
-                        docker ps -q --filter "name=todo-pipeline" | grep -q . && docker stop todo-pipeline || true
-                        docker ps -aq --filter "name=todo-pipeline" | grep -q . && docker rm -f todo-pipeline || true
+                        docker-compose -p todo-pipeline down --remove-orphans
+                        docker system prune -f
                     '''
-                    sh 'docker buildx build . -t todo-node-app --no-cache'
+                    
+                    // Build the new image
+                    sh 'docker-compose -p todo-pipeline build --no-cache'
                 }
             }
         }
@@ -29,11 +29,16 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Stop all running containers from previous deployments
+                    // Deploy and ensure it stays running
                     sh '''
-                        docker-compose down --remove-orphans
-                        sleep 5
-                        docker-compose up -d
+                        docker-compose -p todo-pipeline down
+                        docker-compose -p todo-pipeline up -d
+                        # Wait for container to start
+                        sleep 10
+                        # Verify container is running
+                        docker-compose -p todo-pipeline ps
+                        # Check logs
+                        docker-compose -p todo-pipeline logs
                     '''
                 }
             }
@@ -41,13 +46,8 @@ pipeline {
     }
     
     post {
-        always {
-            echo "Cleaning up..."
-            sh '''
-                docker-compose down --remove-orphans || true
-                docker ps -q --filter "name=node-todo-app" | grep -q . && docker stop node-todo-app || true
-                docker ps -aq --filter "name=node-todo-app" | grep -q . && docker rm -f node-todo-app || true
-            '''
+        failure {
+            sh 'docker-compose -p todo-pipeline logs'
         }
     }
 }
