@@ -1,4 +1,7 @@
-
+*.log
 node_modules/
-deb
-echo
+.env
+.DS_Store
+__pycache__/
+*.pyc
+.vscode/
