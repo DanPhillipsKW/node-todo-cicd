@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'ToDo' }
+    agent { label 'ToDoPipeline' }
     
     stages {
         stage('Code') {
