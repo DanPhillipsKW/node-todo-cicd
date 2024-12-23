@@ -12,12 +12,13 @@
     "start": "node app.js",
     "test": "mocha --recursive --exit"
   },
-  "author": "riaan@entersekt.com",
   "description": "Basic to do list exercise",
   "devDependencies": {
     "chai": "^4.3.7",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "superagent": "^10.1.1"
   }
+  
 }
